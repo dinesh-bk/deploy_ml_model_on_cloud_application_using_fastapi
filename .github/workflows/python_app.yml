@@ -32,4 +32,4 @@ jobs:
       run: uvicorn main:app --reload &
     - name: Test with pytest
       run: |
-        pytest -vv
+        pytest -vv test_api.py
