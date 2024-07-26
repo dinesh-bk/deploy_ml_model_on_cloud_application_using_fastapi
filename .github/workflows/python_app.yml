@@ -31,7 +31,8 @@ jobs:
     - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
     - name: Run server in background
-      run: uvicorn main:app &
+      run: | 
+        uvicorn main:app &
     - name: Test with pytest
       run: |
         pytest -vv 
