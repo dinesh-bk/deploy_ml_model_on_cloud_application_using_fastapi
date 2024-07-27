@@ -57,7 +57,7 @@ async def root():
 @app.post("/predict")
 async def predict(data: CensusData):
     # Convert input data to DataFrame
-    df = pd.DataFrame([data.model_dump(by_alias=True)])
+    df = pd.DataFrame([data.dict(by_alias=True)])
 
     # Process the input data
     cat_features = [
