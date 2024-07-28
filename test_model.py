@@ -4,8 +4,8 @@ import pytest
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from .ml.data import process_data
-from .ml.model import inference, compute_model_metrics
+from ml.data import process_data
+from ml.model import inference, compute_model_metrics
 
 # List of categorical features
 cat_features = [
@@ -58,40 +58,38 @@ def test_column_names(data):
     assert present_in_columns == cat_features, \
         f"Expected columns {cat_features} but got {present_in_columns}"
 
-def test_accuracy(data):
+def load_model_artifacts(model_dir='./model'):
     """
-    Test the model's performance metrics on the test dataset.
-
-    This test evaluates the trained model's performance using the test dataset. It
-    loads the model, encoder, and label binarizer from disk, processes the test data,
-    makes predictions, and calculates precision, recall, and F-beta metrics. It then
-    asserts that these metrics meet the specified thresholds.
+    Load model, encoder, and label binarizer artifacts from disk.
 
     Args:
-        data (pd.DataFrame): The DataFrame loaded by the `data` fixture.
+        model_dir (str): Directory where the model artifacts are stored.
 
-    Raises:
-        AssertionError: If any of the metrics fall below the defined thresholds.
+    Returns:
+        tuple: A tuple containing the loaded model, encoder, and label binarizer.
     """
-    # Split the data into training and testing sets
-    train_data, test_data = train_test_split(data, test_size=0.20, random_state=42)
-
-    # Define paths to model artifacts
-    model_dir = './model'
-    model_filename = 'trained_model.pkl'
-    encoder_filename = 'encoder.pkl'
-    lb_filename = 'labelizer.pkl'
-
-    # Load model and other artifacts
-    model_path = os.path.join(model_dir, model_filename)
-    encoder_path = os.path.join(model_dir, encoder_filename)
-    lb_path = os.path.join(model_dir, lb_filename)
+    model_path = os.path.join(model_dir, 'trained_model.pkl')
+    encoder_path = os.path.join(model_dir, 'encoder.pkl')
+    lb_path = os.path.join(model_dir, 'labelizer.pkl')
 
     model = pickle.load(open(model_path, 'rb'))
     encoder = pickle.load(open(encoder_path, 'rb'))
     lb = pickle.load(open(lb_path, 'rb'))
 
-    # Process the test data
+    return model, encoder, lb
+
+def process_test_data(test_data, encoder, lb):
+    """
+    Process the test data using the encoder and label binarizer.
+
+    Args:
+        test_data (pd.DataFrame): The test dataset.
+        encoder: The encoder used for data transformation.
+        lb: The label binarizer.
+
+    Returns:
+        tuple: Processed features (X_test) and labels (y_test).
+    """
     X_test, y_test, _, _ = process_data(
         test_data,
         categorical_features=cat_features,
@@ -100,22 +98,77 @@ def test_accuracy(data):
         encoder=encoder,
         lb=lb
     )
+    return X_test, y_test
+
+def test_precision_and_recall(data):
+    """
+    Test the model's precision and recall metrics on the test dataset.
+
+    This test evaluates the trained model's precision and recall metrics using the
+    test dataset and asserts that these metrics meet the specified thresholds.
+
+    Args:
+        data (pd.DataFrame): The DataFrame loaded by the `data` fixture.
+
+    Raises:
+        AssertionError: If precision or recall falls below the defined thresholds.
+    """
+    # Split the data into training and testing sets
+    _, test_data = train_test_split(data, test_size=0.20, random_state=42)
+
+    # Load model and other artifacts
+    model, encoder, lb = load_model_artifacts()
+
+    # Process the test data
+    X_test, y_test = process_test_data(test_data, encoder, lb)
 
     # Make predictions
     predictions = inference(model, X_test)
 
     # Compute metrics
-    precision, recall, fbeta = compute_model_metrics(y_test, predictions)
+    precision, recall, _ = compute_model_metrics(y_test, predictions)
 
-    # Define thresholds for metrics
+    # Define thresholds for precision and recall
     precision_threshold = 0.70
     recall_threshold = 0.60
-    fbeta_threshold = 0.60
 
-    # Assert that metrics meet the thresholds
+    # Assert that precision and recall meet the thresholds
     assert precision > precision_threshold, \
         f"Precision is less than {precision_threshold * 100}%"
     assert recall > recall_threshold, \
         f"Recall is less than {recall_threshold * 100}%"
+
+def test_fbeta(data):
+    """
+    Test the model's F-beta score on the test dataset.
+
+    This test evaluates the trained model's F-beta score using the test dataset and
+    asserts that the score meets the specified threshold.
+
+    Args:
+        data (pd.DataFrame): The DataFrame loaded by the `data` fixture.
+
+    Raises:
+        AssertionError: If the F-beta score falls below the defined threshold.
+    """
+    # Split the data into training and testing sets
+    _, test_data = train_test_split(data, test_size=0.20, random_state=42)
+
+    # Load model and other artifacts
+    model, encoder, lb = load_model_artifacts()
+
+    # Process the test data
+    X_test, y_test = process_test_data(test_data, encoder, lb)
+
+    # Make predictions
+    predictions = inference(model, X_test)
+
+    # Compute metrics
+    _, _, fbeta = compute_model_metrics(y_test, predictions)
+
+    # Define threshold for F-beta
+    fbeta_threshold = 0.60
+
+    # Assert that F-beta meets the threshold
     assert fbeta > fbeta_threshold, \
         f"F-beta is less than {fbeta_threshold * 100}%"
