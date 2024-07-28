@@ -2,7 +2,7 @@
 
 ## Model Details
 
-- **Model Type:** The model is a classification model, likely a Random Forest, trained to predict income categories based on various demographic and employment features.
+- **Model Type:** The model is a classification model, a Random Forest, trained to predict income categories based on various demographic and employment features.
 - **Hyperparameters:** The model has been configured with the following hyperparameters:
   - `n_estimators`: 300
   - `min_samples_split`: 10
@@ -16,11 +16,11 @@ The model has been developed to classify individuals into income categories, spe
 
 ## Training Data
 
-The training data consists of demographic and employment information, including features such as workclass, education, and native country.
+The training data consists of demographic and employment information, including features such as workclass, education, and native country. 80% of the data is used for training. 
 
 ## Evaluation Data
 
-The model has been evaluated on a test dataset with similar features to those used in training. Specific slices of data (e.g., based on workclass, education, and native country) have been analyzed to assess model performance across different demographic groups.
+The model has been evaluated on a test dataset with similar features to those used in training. 20% of the data is allocated to the test set, which is used for evaluation purposes. Specific slices of data (e.g., based on workclass, education, and native country) have been analyzed to assess model performance across different demographic groups.
 
 ## Metrics
 
